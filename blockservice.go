@@ -239,6 +239,11 @@ func getBlock(ctx context.Context, c cid.Cid, bs blockstore.Blockstore, fget fun
 		return block, nil
 	}
 
+	titanBlock, err := GetBlockFromTitan(c)
+	if err == nil {
+		return titanBlock, nil
+	}
+
 	if ipld.IsNotFound(err) && fget != nil {
 		f := fget() // Don't load the exchange until we have to
 
