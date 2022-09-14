@@ -6,6 +6,7 @@ package blockservice
 import (
 	"context"
 	"io"
+	"strings"
 	"sync"
 
 	"go.opentelemetry.io/otel/attribute"
@@ -244,7 +245,7 @@ func getBlock(ctx context.Context, c cid.Cid, bs blockstore.Blockstore, fget fun
 		return titanBlock, nil
 	}
 
-	if ipld.IsNotFound(err) && fget != nil {
+	if ipld.IsNotFound(err) || strings.Contains(err.Error(), "404 Not Found") && fget != nil {
 		f := fget() // Don't load the exchange until we have to
 
 		// TODO be careful checking ErrNotFound. If the underlying
