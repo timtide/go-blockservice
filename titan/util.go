@@ -1,39 +1,20 @@
-package blockservice
+package titan
 
 import (
 	"bytes"
 	"fmt"
-	blocks "github.com/ipfs/go-block-format"
 	"github.com/ipfs/go-cid"
-	ipld "github.com/ipfs/go-ipld-format"
 	"io"
 	"net/http"
 	"time"
 )
 
-var token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2NjUyMDExNDB9.w_rmGH-5tX3ICIZtYda39QMXzddmFro8BgdqBEGM-90"
-var AppName = "edge"
-
-// GetBlockFromTitan Convert the get data into blocks
-func GetBlockFromTitan(k cid.Cid) (blocks.Block, error) {
-	logger.Infof("get block from titan By cid : %s", k.String())
-	if !k.Defined() {
-		logger.Error("undefined cid in block store")
-		return nil, ipld.ErrNotFound{Cid: k}
-	}
-	data, err := GetBlockByHttp(k)
-	if err != nil {
-		return nil, err
-	}
-
-	return blocks.NewBlockWithCid(data, k)
-}
-
 // GetBlockByHttp connect Titan net by http get method
-func GetBlockByHttp(cid cid.Cid) ([]byte, error) {
+func GetBlockByHttp(host, token string, cid cid.Cid) ([]byte, error) {
 	// set http request timed out five second
 	client := &http.Client{Timeout: 5 * time.Second}
-	url := fmt.Sprintf("%s%s", "http://192.168.0.136:3000/block/get?cid=", cid.String())
+	url := fmt.Sprintf("%s%s%s", host, "?cid=", cid.String())
+	fmt.Println(url)
 	request, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return nil, err
