@@ -14,7 +14,6 @@ func GetBlockByHttp(host, token string, cid cid.Cid) ([]byte, error) {
 	// set http request timed out five second
 	client := &http.Client{Timeout: 5 * time.Second}
 	url := fmt.Sprintf("%s%s%s", host, "?cid=", cid.String())
-	fmt.Println(url)
 	request, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return nil, err
