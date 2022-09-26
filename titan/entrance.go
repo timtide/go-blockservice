@@ -7,7 +7,7 @@ import (
 	ipld "github.com/ipfs/go-ipld-format"
 )
 
-var ScheduleUrlOfTitan = "http://192.168.0.43:3456/rpc/v0"
+var ScheduleUrlOfTitan = "http://192.168.0.45:3456/rpc/v0"
 var AppName = "edge"
 
 // GetBlockFromTitan request data from titan and Convert the get data into blocks
