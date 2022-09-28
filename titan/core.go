@@ -64,7 +64,7 @@ func (c *ClientOfTitan) getDownloadInfoFromScheduleService(cid cid.Cid) (*api.Do
 	case df := <-ch:
 		return df, nil
 	case <-time.Tick(5 * time.Second):
-		return nil, fmt.Errorf("%s", "Not Found")
+		return nil, fmt.Errorf("%s", "get download info from titan schedule service time out")
 	}
 }
 

@@ -7,7 +7,6 @@ import (
 	"context"
 	"github.com/ipfs/go-blockservice/titan"
 	"io"
-	"strings"
 	"sync"
 
 	"go.opentelemetry.io/otel/attribute"
@@ -241,13 +240,15 @@ func getBlock(ctx context.Context, c cid.Cid, bs blockstore.Blockstore, fget fun
 		return block, nil
 	}
 
-	titanBlock, err := titan.GetBlockFromTitan(ctx, c)
-	if err == nil {
+	titanBlock, terr := titan.GetBlockFromTitan(ctx, c)
+	if terr == nil {
 		logger.Infof("get block from titan By cid : %s", c.String())
 		return titanBlock, nil
+	} else {
+		logger.Errorf("%s", terr.Error())
 	}
 
-	if ipld.IsNotFound(err) || strings.Contains(err.Error(), "Not Found") && fget != nil {
+	if ipld.IsNotFound(err) && fget != nil {
 		f := fget() // Don't load the exchange until we have to
 
 		// TODO be careful checking ErrNotFound. If the underlying
@@ -330,12 +331,28 @@ func getBlocks(ctx context.Context, ks []cid.Cid, bs blockstore.Blockstore, fget
 			}
 		}
 
-		if len(misses) == 0 || fget == nil {
+		var titanMisses []cid.Cid
+		if len(misses) != 0 {
+			for _, c := range misses {
+				hit, err := titan.GetBlockFromTitan(ctx, c)
+				if err != nil {
+					titanMisses = append(titanMisses, c)
+					continue
+				}
+				select {
+				case out <- hit:
+				case <-ctx.Done():
+					return
+				}
+			}
+		}
+
+		if len(titanMisses) == 0 || fget == nil {
 			return
 		}
 
 		f := fget() // don't load exchange unless we have to
-		rblocks, err := f.GetBlocks(ctx, misses)
+		rblocks, err := f.GetBlocks(ctx, titanMisses)
 		if err != nil {
 			logger.Debugf("Error with GetBlocks: %s", err)
 			return
