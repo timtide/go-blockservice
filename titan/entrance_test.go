@@ -12,7 +12,13 @@ func TestGetBlockFromTitan(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	block, err := GetBlockFromTitan(context.TODO(), decodeCid)
+	urls := []string{
+		"/ip4/192.168.0.45/tcp/4567",
+		"/ip4/192.168.0.45/tcp/3456",
+		"/ip4/192.168.0.43/tcp/3456",
+	}
+	ctx := context.WithValue(context.Background(), "TitanIps", urls)
+	block, err := GetBlockFromTitan(ctx, decodeCid)
 	if err != nil {
 		t.Error(err)
 		return

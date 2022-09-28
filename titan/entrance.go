@@ -7,7 +7,6 @@ import (
 	ipld "github.com/ipfs/go-ipld-format"
 )
 
-var ScheduleUrlOfTitan = "http://192.168.0.45:3456/rpc/v0"
 var AppName = "edge"
 
 // GetBlockFromTitan request data from titan and Convert the get data into blocks
@@ -17,7 +16,10 @@ func GetBlockFromTitan(ctx context.Context, k cid.Cid) (blocks.Block, error) {
 	}
 
 	// create titan client object
-	client := NewClientTitan(ctx, ScheduleUrlOfTitan)
+	client, err := NewClientTitan(ctx)
+	if err != nil {
+		return nil, err
+	}
 
 	// request data by cid
 	data, err := client.GetDataFromEdgeNode(k)

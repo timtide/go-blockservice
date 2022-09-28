@@ -4,10 +4,14 @@ import (
 	"bytes"
 	"fmt"
 	"github.com/ipfs/go-cid"
+	ma "github.com/multiformats/go-multiaddr"
+	manet "github.com/multiformats/go-multiaddr/net"
 	"io"
 	"net/http"
 	"time"
 )
+
+const RPCProtocol = "/rpc/v0"
 
 // GetBlockByHttp connect Titan net by http get method
 func GetBlockByHttp(host, token string, cid cid.Cid) ([]byte, error) {
@@ -50,4 +54,31 @@ func GetBlockByHttp(host, token string, cid cid.Cid) ([]byte, error) {
 	}
 
 	return result.Bytes(), nil
+}
+
+func transformationMultiAddrStringsToUrl(multiAddrStrings []string) ([]string, error) {
+	length := len(multiAddrStrings)
+	if length == 0 {
+		return nil, fmt.Errorf("multi address is null")
+	}
+
+	result := make([]string, 0, length)
+	for _, v := range multiAddrStrings {
+		multiAddr, err := ma.NewMultiaddr(v)
+		if err != nil {
+			return nil, err
+		}
+		pt, host, err := manet.DialArgs(multiAddr)
+		if err != nil {
+			return nil, err
+		}
+		// todo tcp6 ?
+		switch pt {
+		case "tcp4":
+			result = append(result, fmt.Sprintf("%s%s%s", "http://", host, RPCProtocol))
+		default:
+			return nil, fmt.Errorf("unkown protocol type")
+		}
+	}
+	return result, nil
 }
