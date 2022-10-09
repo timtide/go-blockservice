@@ -245,7 +245,7 @@ func getBlock(ctx context.Context, c cid.Cid, bs blockstore.Blockstore, fget fun
 		logger.Infof("get block from titan By cid : %s", c.String())
 		return titanBlock, nil
 	} else {
-		logger.Errorf("%s", terr.Error())
+		logger.Warn("get block from titan failure : ", terr.Error())
 	}
 
 	if ipld.IsNotFound(err) && fget != nil {
@@ -331,21 +331,28 @@ func getBlocks(ctx context.Context, ks []cid.Cid, bs blockstore.Blockstore, fget
 			}
 		}
 
+		var wg sync.WaitGroup
 		var titanMisses []cid.Cid
 		if len(misses) != 0 {
+			wg.Add(len(misses))
 			for _, c := range misses {
-				hit, err := titan.GetBlockFromTitan(ctx, c)
-				if err != nil {
-					titanMisses = append(titanMisses, c)
-					continue
-				}
-				select {
-				case out <- hit:
-				case <-ctx.Done():
-					return
-				}
+				value := c
+				go func(cid cid.Cid) {
+					defer wg.Done()
+					hit, err := titan.GetBlockFromTitan(ctx, cid)
+					if err != nil {
+						titanMisses = append(titanMisses, cid)
+						return
+					}
+					select {
+					case out <- hit:
+					case <-ctx.Done():
+						return
+					}
+				}(value)
 			}
 		}
+		wg.Wait()
 
 		if len(titanMisses) == 0 || fget == nil {
 			return

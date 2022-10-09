@@ -79,5 +79,5 @@ func (c *ClientOfTitan) GetDataFromEdgeNode(cid cid.Cid) ([]byte, error) {
 		return nil, errors.New("404 Not Found")
 	}
 
-	return GetBlockByHttp(df.URL, df.Token, cid)
+	return getBlockByHttp(df.URL, df.Token, cid)
 }
