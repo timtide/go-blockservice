@@ -7,7 +7,7 @@ import (
 	ipld "github.com/ipfs/go-ipld-format"
 )
 
-var AppName = "edge"
+const AppName = "edge"
 
 // GetBlockFromTitan request data from titan and Convert the get data into blocks
 func GetBlockFromTitan(ctx context.Context, k cid.Cid) (blocks.Block, error) {

@@ -5,6 +5,7 @@ package blockservice
 
 import (
 	"context"
+	"fmt"
 	"github.com/ipfs/go-blockservice/titan"
 	"io"
 	"sync"
@@ -16,7 +17,6 @@ import (
 	cid "github.com/ipfs/go-cid"
 	blockstore "github.com/ipfs/go-ipfs-blockstore"
 	exchange "github.com/ipfs/go-ipfs-exchange-interface"
-	ipld "github.com/ipfs/go-ipld-format"
 	logging "github.com/ipfs/go-log/v2"
 	"github.com/ipfs/go-verifcid"
 
@@ -235,44 +235,27 @@ func getBlock(ctx context.Context, c cid.Cid, bs blockstore.Blockstore, fget fun
 		return nil, err
 	}
 
-	block, err := bs.Get(ctx, c)
-	if err == nil {
-		return block, nil
+	loadLevelInf := ctx.Value(LoadLevelOfSign)
+	if loadLevel, ok := loadLevelInf.(uint8); ok {
+		switch loadLevel {
+		case LoadOfLocalTitanIpfs.Uint8():
+			return loadBlockByLocalTitanIpfs(ctx, c, bs, fget)
+		case LoadOfLocalTitan.Uint8():
+			return loadBlockByLocalTitan(ctx, c, bs)
+		case LoadOfLocalIpfs.Uint8():
+			return loadBlockByLocalIpfs(ctx, c, bs, fget)
+		case LoadOfOnlyLocal.Uint8():
+			return loadBlockByLocal(ctx, c, bs)
+		case LoadOfOnlyTitan.Uint8():
+			return loadBlockByTitan(ctx, c)
+		case LoadOfOnlyIpfs.Uint8():
+			return loadBlockByIpfs(ctx, c, bs, fget)
+		default:
+			return nil, fmt.Errorf("unknown load level")
+		}
 	}
 
-	titanBlock, terr := titan.GetBlockFromTitan(ctx, c)
-	if terr == nil {
-		logger.Infof("get block from titan By cid : %s", c.String())
-		return titanBlock, nil
-	} else {
-		logger.Warn("get block from titan failure : ", terr.Error())
-	}
-
-	if ipld.IsNotFound(err) && fget != nil {
-		f := fget() // Don't load the exchange until we have to
-
-		// TODO be careful checking ErrNotFound. If the underlying
-		// implementation changes, this will break.
-		logger.Debug("Blockservice: Searching bitswap")
-		blk, err := f.GetBlock(ctx, c)
-		if err != nil {
-			return nil, err
-		}
-		// also write in the blockstore for caching, inform the exchange that the block is available
-		err = bs.Put(ctx, blk)
-		if err != nil {
-			return nil, err
-		}
-		err = f.NotifyNewBlocks(ctx, blk)
-		if err != nil {
-			return nil, err
-		}
-		logger.Debugf("BlockService.BlockFetched %s", c)
-		return blk, nil
-	}
-
-	logger.Debug("Blockservice GetBlock: Not found")
-	return nil, err
+	return nil, fmt.Errorf("load level type fail")
 }
 
 // GetBlocks gets a list of blocks asynchronously and returns through
