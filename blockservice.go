@@ -236,6 +236,10 @@ func getBlock(ctx context.Context, c cid.Cid, bs blockstore.Blockstore, fget fun
 	}
 
 	loadLevelInf := ctx.Value(LoadLevelOfSign)
+	// other default
+	if loadLevelInf == nil {
+		loadLevelInf = LoadOfLocalTitanIpfs
+	}
 	if loadLevel, ok := loadLevelInf.(uint8); ok {
 		switch loadLevel {
 		case LoadOfLocalTitanIpfs.Uint8():
