@@ -221,14 +221,14 @@ func (s *blockService) GetBlock(ctx context.Context, c cid.Cid) (blocks.Block, e
 	if s.exchange != nil {
 		f = s.getExchange
 	}
-	start := time.Now().Unix()
-	logger.Debugf("get block start")
+	start := time.Now().UnixMilli()
+	logger.Debugf("start get %s block", c)
 	b, err := getBlock(ctx, c, s.blockstore, f) // hash security
 	if err != nil {
 		return nil, err
 	}
-	end := time.Now().Unix()
-	logger.Debugf("get block end and time consuming %d ms", (end-start)/1000)
+	end := time.Now().UnixMilli()
+	logger.Debugf("end get block and total time is %d ms", end-start)
 	return b, nil
 }
 
