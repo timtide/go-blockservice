@@ -147,7 +147,7 @@ func loadBlockByLocal(ctx context.Context, c cid.Cid, bs blockstore.Blockstore) 
 func loadBlockByTitan(ctx context.Context, c cid.Cid) (blocks.Block, error) {
 	titanBlock, terr := titan.GetBlockFromTitan(ctx, c)
 	if terr == nil {
-		logger.Infof("get block success from titan By cid : %s", c.String())
+		logger.Debugf("get block success from titan By cid : %s", c.String())
 		return titanBlock, nil
 	}
 
