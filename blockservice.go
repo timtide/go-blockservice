@@ -482,15 +482,14 @@ func (s *Session) getFetcherFactory() func() notifiableFetcher {
 func (s *Session) GetBlock(ctx context.Context, c cid.Cid) (blocks.Block, error) {
 	ctx, span := internal.StartSpan(ctx, "Session.GetBlock", trace.WithAttributes(attribute.Stringer("CID", c)))
 	defer span.End()
-
-	start := time.Now().Unix()
+	start := time.Now().UnixNano()
 	logger.Debugf("get block start")
 	b, err := getBlock(ctx, c, s.bs, s.getFetcherFactory()) // hash security
 	if err != nil {
 		return nil, err
 	}
-	end := time.Now().Unix()
-	logger.Debugf("get block end and time consuming %d ms", (end-start)/1000)
+	end := time.Now().UnixNano()
+	logger.Debugf("get block end and time consuming %d ms", (end-start)/10^6)
 	return b, nil
 }
 
