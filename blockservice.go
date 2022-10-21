@@ -482,6 +482,7 @@ func (s *Session) getFetcherFactory() func() notifiableFetcher {
 func (s *Session) GetBlock(ctx context.Context, c cid.Cid) (blocks.Block, error) {
 	ctx, span := internal.StartSpan(ctx, "Session.GetBlock", trace.WithAttributes(attribute.Stringer("CID", c)))
 	defer span.End()
+
 	start := time.Now().UnixMilli()
 	logger.Debugf("start get %s block", c)
 	b, err := getBlock(ctx, c, s.bs, s.getFetcherFactory()) // hash security
@@ -490,6 +491,7 @@ func (s *Session) GetBlock(ctx context.Context, c cid.Cid) (blocks.Block, error)
 	}
 	end := time.Now().UnixMilli()
 	logger.Debugf("end get block and total time is %d ms", end-start)
+
 	return b, nil
 }
 
