@@ -7,11 +7,11 @@ import (
 	"context"
 	"fmt"
 	"github.com/ipfs/go-blockservice/titan"
-	"io"
-	"sync"
-
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
+	"io"
+	"sync"
+	"time"
 
 	blocks "github.com/ipfs/go-block-format"
 	cid "github.com/ipfs/go-cid"
@@ -221,8 +221,15 @@ func (s *blockService) GetBlock(ctx context.Context, c cid.Cid) (blocks.Block, e
 	if s.exchange != nil {
 		f = s.getExchange
 	}
-
-	return getBlock(ctx, c, s.blockstore, f) // hash security
+	start := time.Now().Unix()
+	logger.Debugf("get block start")
+	b, err := getBlock(ctx, c, s.blockstore, f) // hash security
+	if err != nil {
+		return nil, err
+	}
+	end := time.Now().Unix()
+	logger.Debugf("get block end and time consuming %d ms", (end-start)/1000)
+	return b, nil
 }
 
 func (s *blockService) getExchange() notifiableFetcher {
@@ -241,6 +248,7 @@ func getBlock(ctx context.Context, c cid.Cid, bs blockstore.Blockstore, fget fun
 		loadLevelInf = LoadOfLocalTitanIpfs.Uint8()
 	}
 	if loadLevel, ok := loadLevelInf.(uint8); ok {
+		logger.Debugf("load level of get block is %d", loadLevel)
 		switch loadLevel {
 		case LoadOfLocalTitanIpfs.Uint8():
 			return loadBlockByLocalTitanIpfs(ctx, c, bs, fget)

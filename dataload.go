@@ -37,6 +37,7 @@ func (l LoadLevel) Int() int {
 func loadBlockByLocalTitanIpfs(ctx context.Context, c cid.Cid, bs blockstore.Blockstore, fget func() notifiableFetcher) (blocks.Block, error) {
 	block, err := bs.Get(ctx, c)
 	if err == nil {
+		logger.Debugf("get block success from local By cid : %s", c)
 		return block, nil
 	}
 
@@ -56,6 +57,7 @@ func loadBlockByLocalTitanIpfs(ctx context.Context, c cid.Cid, bs blockstore.Blo
 		if err != nil {
 			return nil, err
 		}
+		logger.Debugf("get block success from ipfs network By cid : %s", c)
 		// also write in the block store for caching, inform the exchange that the block is available
 		err = bs.Put(ctx, blk)
 		if err != nil {
@@ -77,13 +79,16 @@ func loadBlockByLocalTitanIpfs(ctx context.Context, c cid.Cid, bs blockstore.Blo
 func loadBlockByLocalTitan(ctx context.Context, c cid.Cid, bs blockstore.Blockstore) (blocks.Block, error) {
 	block, err := bs.Get(ctx, c)
 	if err == nil {
+		logger.Debugf("get block success from local By cid : %s", c)
 		return block, nil
 	}
 
-	titanBlock, terr := titan.GetBlockFromTitan(ctx, c)
-	if terr == nil {
-		logger.Infof("get block success from titan By cid : %s", c.String())
-		return titanBlock, nil
+	if ipld.IsNotFound(err) {
+		titanBlock, err := titan.GetBlockFromTitan(ctx, c)
+		if err == nil {
+			logger.Debugf("get block success from titan By cid : %s", c.String())
+			return titanBlock, nil
+		}
 	}
 
 	logger.Debug("Block service GetBlock: Not found")
@@ -94,6 +99,7 @@ func loadBlockByLocalTitan(ctx context.Context, c cid.Cid, bs blockstore.Blockst
 func loadBlockByLocalIpfs(ctx context.Context, c cid.Cid, bs blockstore.Blockstore, fget func() notifiableFetcher) (blocks.Block, error) {
 	block, err := bs.Get(ctx, c)
 	if err == nil {
+		logger.Debugf("get block success from local By cid : %s", c)
 		return block, nil
 	}
 
@@ -107,6 +113,7 @@ func loadBlockByLocalIpfs(ctx context.Context, c cid.Cid, bs blockstore.Blocksto
 		if err != nil {
 			return nil, err
 		}
+		logger.Debugf("get block success from ipfs network By cid : %s", c)
 		// also write in the block store for caching, inform the exchange that the block is available
 		err = bs.Put(ctx, blk)
 		if err != nil {
@@ -128,6 +135,7 @@ func loadBlockByLocalIpfs(ctx context.Context, c cid.Cid, bs blockstore.Blocksto
 func loadBlockByLocal(ctx context.Context, c cid.Cid, bs blockstore.Blockstore) (blocks.Block, error) {
 	block, err := bs.Get(ctx, c)
 	if err == nil {
+		logger.Debugf("get block success from local By cid : %s", c)
 		return block, nil
 	}
 
@@ -159,6 +167,7 @@ func loadBlockByIpfs(ctx context.Context, c cid.Cid, bs blockstore.Blockstore, f
 		if err != nil {
 			return nil, err
 		}
+		logger.Debugf("get block success from ipfs network By cid : %s", c)
 		// also write in the block store for caching, inform the exchange that the block is available
 		err = bs.Put(ctx, blk)
 		if err != nil {
