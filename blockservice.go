@@ -489,7 +489,7 @@ func (s *Session) GetBlock(ctx context.Context, c cid.Cid) (blocks.Block, error)
 		return nil, err
 	}
 	end := time.Now().UnixMilli()
-	logger.Debugf("get block end and time consuming %d ms", (end-start)/10^6)
+	logger.Debugf("get block end and time consuming %d ms", end-start)
 	return b, nil
 }
 
