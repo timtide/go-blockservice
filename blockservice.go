@@ -6,7 +6,6 @@ package blockservice
 import (
 	"context"
 	"fmt"
-	"github.com/ipfs/go-blockservice/titan"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 	"io"
@@ -281,8 +280,12 @@ func (s *blockService) GetBlocks(ctx context.Context, ks []cid.Cid) <-chan block
 	if s.exchange != nil {
 		f = s.getExchange
 	}
-
-	return getBlocks(ctx, ks, s.blockstore, f) // hash security
+	start := time.Now().UnixMilli()
+	logger.Debug(">>>>>>>>>> start a batch to get block")
+	out := getBlocks(ctx, ks, s.blockstore, f) // hash security
+	end := time.Now().UnixMilli()
+	logger.Debugf("<<<<<<<<<< end a batch to get block and total time is %d ms", end-start)
+	return out
 }
 
 func getBlocks(ctx context.Context, ks []cid.Cid, bs blockstore.Blockstore, fget func() notifiableFetcher) <-chan blocks.Block {
@@ -312,100 +315,28 @@ func getBlocks(ctx context.Context, ks []cid.Cid, bs blockstore.Blockstore, fget
 			ks = ks2
 		}
 
-		var misses []cid.Cid
-		for _, c := range ks {
-			hit, err := bs.Get(ctx, c)
-			if err != nil {
-				misses = append(misses, c)
-				continue
-			}
-			select {
-			case out <- hit:
-			case <-ctx.Done():
+		loadLevelInf := ctx.Value(LoadLevelOfSign)
+		// other default
+		if loadLevelInf == nil {
+			loadLevelInf = LoadOfLocalTitanIpfs.Uint8()
+		}
+		if loadLevel, ok := loadLevelInf.(uint8); ok {
+			logger.Debugf("load level of get block is %d", loadLevel)
+			switch loadLevel {
+			case LoadOfLocalTitanIpfs.Uint8():
+				loadBlocksByLocalTitanIpfs(ctx, ks, bs, fget, out)
+			case LoadOfLocalTitan.Uint8():
+				loadBlocksByLocalTitan(ctx, ks, bs, out)
+			case LoadOfLocalIpfs.Uint8():
+				loadBlocksByLocalIpfs(ctx, ks, bs, fget, out)
+			case LoadOfOnlyLocal.Uint8():
+				loadBlocksByLocal(ctx, ks, bs, out)
+			case LoadOfOnlyTitan.Uint8():
+				loadBlocksByTitan(ctx, ks, out)
+			case LoadOfOnlyIpfs.Uint8():
+				loadBlocksByIpfs(ctx, ks, bs, fget, out)
+			default:
 				return
-			}
-		}
-
-		var wg sync.WaitGroup
-		var titanMisses []cid.Cid
-		if len(misses) != 0 {
-			wg.Add(len(misses))
-			for _, c := range misses {
-				value := c
-				go func(cid cid.Cid) {
-					defer wg.Done()
-					hit, err := titan.GetBlockFromTitan(ctx, cid)
-					if err != nil {
-						titanMisses = append(titanMisses, cid)
-						return
-					}
-					select {
-					case out <- hit:
-					case <-ctx.Done():
-						return
-					}
-				}(value)
-			}
-		}
-		wg.Wait()
-
-		if len(titanMisses) == 0 || fget == nil {
-			return
-		}
-
-		f := fget() // don't load exchange unless we have to
-		rblocks, err := f.GetBlocks(ctx, titanMisses)
-		if err != nil {
-			logger.Debugf("Error with GetBlocks: %s", err)
-			return
-		}
-
-		// batch available blocks together
-		const batchSize = 32
-		batch := make([]blocks.Block, 0, batchSize)
-		for {
-			var noMoreBlocks bool
-		batchLoop:
-			for len(batch) < batchSize {
-				select {
-				case b, ok := <-rblocks:
-					if !ok {
-						noMoreBlocks = true
-						break batchLoop
-					}
-
-					logger.Debugf("BlockService.BlockFetched %s", b.Cid())
-					batch = append(batch, b)
-				case <-ctx.Done():
-					return
-				default:
-					break batchLoop
-				}
-			}
-
-			// also write in the blockstore for caching, inform the exchange that the blocks are available
-			err = bs.PutMany(ctx, batch)
-			if err != nil {
-				logger.Errorf("could not write blocks from the network to the blockstore: %s", err)
-				return
-			}
-
-			err = f.NotifyNewBlocks(ctx, batch...)
-			if err != nil {
-				logger.Errorf("could not tell the exchange about new blocks: %s", err)
-				return
-			}
-
-			for _, b := range batch {
-				select {
-				case out <- b:
-				case <-ctx.Done():
-					return
-				}
-			}
-			batch = batch[:0]
-			if noMoreBlocks {
-				break
 			}
 		}
 	}()
@@ -500,7 +431,12 @@ func (s *Session) GetBlocks(ctx context.Context, ks []cid.Cid) <-chan blocks.Blo
 	ctx, span := internal.StartSpan(ctx, "Session.GetBlocks")
 	defer span.End()
 
-	return getBlocks(ctx, ks, s.bs, s.getFetcherFactory()) // hash security
+	start := time.Now().UnixMilli()
+	logger.Debug(">>>>>>>>>> start a batch to get block")
+	out := getBlocks(ctx, ks, s.bs, s.getFetcherFactory()) // hash security
+	end := time.Now().UnixMilli()
+	logger.Debugf("<<<<<<<<<< end a batch to get block and total time is %d ms", end-start)
+	return out
 }
 
 var _ BlockGetter = (*Session)(nil)
