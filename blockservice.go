@@ -247,7 +247,6 @@ func getBlock(ctx context.Context, c cid.Cid, bs blockstore.Blockstore, fget fun
 		loadLevelInf = LoadOfLocalTitanIpfs.Uint8()
 	}
 	if loadLevel, ok := loadLevelInf.(uint8); ok {
-		logger.Debugf("load level of get block is %d", loadLevel)
 		switch loadLevel {
 		case LoadOfLocalTitanIpfs.Uint8():
 			return loadBlockByLocalTitanIpfs(ctx, c, bs, fget)
@@ -280,12 +279,7 @@ func (s *blockService) GetBlocks(ctx context.Context, ks []cid.Cid) <-chan block
 	if s.exchange != nil {
 		f = s.getExchange
 	}
-	start := time.Now().UnixMilli()
-	logger.Debug(">>>>>>>>>> start a batch to get block")
-	out := getBlocks(ctx, ks, s.blockstore, f) // hash security
-	end := time.Now().UnixMilli()
-	logger.Debugf("<<<<<<<<<< end a batch to get block and total time is %d ms", end-start)
-	return out
+	return getBlocks(ctx, ks, s.blockstore, f) // hash security
 }
 
 func getBlocks(ctx context.Context, ks []cid.Cid, bs blockstore.Blockstore, fget func() notifiableFetcher) <-chan blocks.Block {
@@ -321,7 +315,6 @@ func getBlocks(ctx context.Context, ks []cid.Cid, bs blockstore.Blockstore, fget
 			loadLevelInf = LoadOfLocalTitanIpfs.Uint8()
 		}
 		if loadLevel, ok := loadLevelInf.(uint8); ok {
-			logger.Debugf("load level of get block is %d", loadLevel)
 			switch loadLevel {
 			case LoadOfLocalTitanIpfs.Uint8():
 				loadBlocksByLocalTitanIpfs(ctx, ks, bs, fget, out)
@@ -431,12 +424,7 @@ func (s *Session) GetBlocks(ctx context.Context, ks []cid.Cid) <-chan blocks.Blo
 	ctx, span := internal.StartSpan(ctx, "Session.GetBlocks")
 	defer span.End()
 
-	start := time.Now().UnixMilli()
-	logger.Debug(">>>>>>>>>> start a batch to get block")
-	out := getBlocks(ctx, ks, s.bs, s.getFetcherFactory()) // hash security
-	end := time.Now().UnixMilli()
-	logger.Debugf("<<<<<<<<<< end a batch to get block and total time is %d ms", end-start)
-	return out
+	return getBlocks(ctx, ks, s.bs, s.getFetcherFactory()) // hash security
 }
 
 var _ BlockGetter = (*Session)(nil)
