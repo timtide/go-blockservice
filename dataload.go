@@ -44,7 +44,7 @@ func loadBlockByLocalTitanIpfs(ctx context.Context, c cid.Cid, bs blockstore.Blo
 
 	titanBlock, terr := titan.GetBlockFromTitan(ctx, c)
 	if terr == nil {
-		logger.Infof("got block success from titan By cid : %s", c.String())
+		logger.Debugf("got block success from titan By cid : %s", c.String())
 		return titanBlock, nil
 	}
 
