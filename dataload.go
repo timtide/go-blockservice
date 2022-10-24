@@ -38,13 +38,13 @@ func (l LoadLevel) Int() int {
 func loadBlockByLocalTitanIpfs(ctx context.Context, c cid.Cid, bs blockstore.Blockstore, fget func() notifiableFetcher) (blocks.Block, error) {
 	block, err := bs.Get(ctx, c)
 	if err == nil {
-		logger.Debugf("get block success from local By cid : %s", c)
+		logger.Debugf("got block success from local By cid : %s", c)
 		return block, nil
 	}
 
 	titanBlock, terr := titan.GetBlockFromTitan(ctx, c)
 	if terr == nil {
-		logger.Infof("get block success from titan By cid : %s", c.String())
+		logger.Infof("got block success from titan By cid : %s", c.String())
 		return titanBlock, nil
 	}
 
@@ -58,7 +58,7 @@ func loadBlockByLocalTitanIpfs(ctx context.Context, c cid.Cid, bs blockstore.Blo
 		if err != nil {
 			return nil, err
 		}
-		logger.Debugf("get block success from ipfs network By cid : %s", c)
+		logger.Debugf("got block success from ipfs network By cid : %s", c)
 		// also write in the block store for caching, inform the exchange that the block is available
 		err = bs.Put(ctx, blk)
 		if err != nil {
@@ -86,7 +86,7 @@ func loadBlocksByLocalTitanIpfs(ctx context.Context, ks []cid.Cid, bs blockstore
 		}
 		select {
 		case out <- hit:
-			logger.Debugf("get block success from local By cid : %s", hit.Cid())
+			logger.Debugf("got block success from local By cid : %s", hit.Cid())
 		case <-ctx.Done():
 			return
 		}
@@ -107,7 +107,7 @@ func loadBlocksByLocalTitanIpfs(ctx context.Context, ks []cid.Cid, bs blockstore
 				}
 				select {
 				case out <- hit:
-					logger.Infof("get block success from titan By cid : %s", hit.Cid())
+					logger.Debugf("got block success from titan By cid : %s", hit.Cid())
 				case <-ctx.Done():
 					return
 				}
@@ -140,7 +140,7 @@ func loadBlocksByLocalTitanIpfs(ctx context.Context, ks []cid.Cid, bs blockstore
 					noMoreBlocks = true
 					break batchLoop
 				}
-				logger.Debugf("get block success from ipfs network By cid : %s", b.Cid())
+				logger.Debugf("got block success from ipfs network By cid : %s", b.Cid())
 				// logger.Debugf("BlockService.BlockFetched %s", b.Cid())
 				batch = append(batch, b)
 			case <-ctx.Done():
@@ -181,14 +181,14 @@ func loadBlocksByLocalTitanIpfs(ctx context.Context, ks []cid.Cid, bs blockstore
 func loadBlockByLocalTitan(ctx context.Context, c cid.Cid, bs blockstore.Blockstore) (blocks.Block, error) {
 	block, err := bs.Get(ctx, c)
 	if err == nil {
-		logger.Debugf("get block success from local By cid : %s", c)
+		logger.Debugf("got block success from local By cid : %s", c)
 		return block, nil
 	}
 
 	if ipld.IsNotFound(err) {
 		titanBlock, err := titan.GetBlockFromTitan(ctx, c)
 		if err == nil {
-			logger.Debugf("get block success from titan By cid : %s", c.String())
+			logger.Debugf("got block success from titan By cid : %s", c.String())
 			return titanBlock, nil
 		}
 	}
@@ -207,7 +207,7 @@ func loadBlocksByLocalTitan(ctx context.Context, ks []cid.Cid, bs blockstore.Blo
 		}
 		select {
 		case out <- hit:
-			logger.Debugf("get block success from local By cid : %s", hit.Cid())
+			logger.Debugf("got block success from local By cid : %s", hit.Cid())
 		case <-ctx.Done():
 			return
 		}
@@ -228,7 +228,7 @@ func loadBlocksByLocalTitan(ctx context.Context, ks []cid.Cid, bs blockstore.Blo
 				}
 				select {
 				case out <- hit:
-					logger.Infof("get block success from titan By cid : %s", hit.Cid())
+					logger.Debugf("got block success from titan By cid : %s", hit.Cid())
 				case <-ctx.Done():
 					return
 				}
@@ -242,7 +242,7 @@ func loadBlocksByLocalTitan(ctx context.Context, ks []cid.Cid, bs blockstore.Blo
 func loadBlockByLocalIpfs(ctx context.Context, c cid.Cid, bs blockstore.Blockstore, fget func() notifiableFetcher) (blocks.Block, error) {
 	block, err := bs.Get(ctx, c)
 	if err == nil {
-		logger.Debugf("get block success from local By cid : %s", c)
+		logger.Debugf("got block success from local By cid : %s", c)
 		return block, nil
 	}
 
@@ -256,7 +256,7 @@ func loadBlockByLocalIpfs(ctx context.Context, c cid.Cid, bs blockstore.Blocksto
 		if err != nil {
 			return nil, err
 		}
-		logger.Debugf("get block success from ipfs network By cid : %s", c)
+		logger.Debugf("got block success from ipfs network By cid : %s", c)
 		// also write in the block store for caching, inform the exchange that the block is available
 		err = bs.Put(ctx, blk)
 		if err != nil {
@@ -283,7 +283,7 @@ func loadBlocksByLocalIpfs(ctx context.Context, ks []cid.Cid, bs blockstore.Bloc
 		}
 		select {
 		case out <- hit:
-			logger.Debugf("get block success from local By cid : %s", hit.Cid())
+			logger.Debugf("got block success from local By cid : %s", hit.Cid())
 		case <-ctx.Done():
 			return
 		}
@@ -313,7 +313,7 @@ func loadBlocksByLocalIpfs(ctx context.Context, ks []cid.Cid, bs blockstore.Bloc
 					noMoreBlocks = true
 					break batchLoop
 				}
-				logger.Debugf("get block success from ipfs network By cid : %s", b.Cid())
+				logger.Debugf("got block success from ipfs network By cid : %s", b.Cid())
 				// logger.Debugf("BlockService.BlockFetched %s", b.Cid())
 				batch = append(batch, b)
 			case <-ctx.Done():
@@ -354,7 +354,7 @@ func loadBlocksByLocalIpfs(ctx context.Context, ks []cid.Cid, bs blockstore.Bloc
 func loadBlockByLocal(ctx context.Context, c cid.Cid, bs blockstore.Blockstore) (blocks.Block, error) {
 	block, err := bs.Get(ctx, c)
 	if err == nil {
-		logger.Debugf("get block success from local By cid : %s", c)
+		logger.Debugf("got block success from local By cid : %s", c)
 		return block, nil
 	}
 
@@ -370,7 +370,7 @@ func loadBlocksByLocal(ctx context.Context, ks []cid.Cid, bs blockstore.Blocksto
 		}
 		select {
 		case out <- hit:
-			logger.Debugf("get block success from local By cid : %s", hit.Cid())
+			logger.Debugf("got block success from local By cid : %s", hit.Cid())
 		case <-ctx.Done():
 			return
 		}
@@ -381,7 +381,7 @@ func loadBlocksByLocal(ctx context.Context, ks []cid.Cid, bs blockstore.Blocksto
 func loadBlockByTitan(ctx context.Context, c cid.Cid) (blocks.Block, error) {
 	titanBlock, terr := titan.GetBlockFromTitan(ctx, c)
 	if terr == nil {
-		logger.Debugf("get block success from titan By cid : %s", c.String())
+		logger.Debugf("got block success from titan By cid : %s", c.String())
 		return titanBlock, nil
 	}
 
@@ -405,7 +405,7 @@ func loadBlocksByTitan(ctx context.Context, ks []cid.Cid, out chan blocks.Block)
 				}
 				select {
 				case out <- hit:
-					logger.Infof("get block success from titan By cid : %s", hit.Cid())
+					logger.Debugf("got block success from titan By cid : %s", hit.Cid())
 				case <-ctx.Done():
 					return
 				}
@@ -427,7 +427,7 @@ func loadBlockByIpfs(ctx context.Context, c cid.Cid, bs blockstore.Blockstore, f
 		if err != nil {
 			return nil, err
 		}
-		logger.Debugf("get block success from ipfs network By cid : %s", c)
+		logger.Debugf("got block success from ipfs network By cid : %s", c)
 		// also write in the block store for caching, inform the exchange that the block is available
 		err = bs.Put(ctx, blk)
 		if err != nil {
@@ -469,7 +469,7 @@ func loadBlocksByIpfs(ctx context.Context, ks []cid.Cid, bs blockstore.Blockstor
 					noMoreBlocks = true
 					break batchLoop
 				}
-				logger.Debugf("get block success from ipfs network By cid : %s", b.Cid())
+				logger.Debugf("got block success from ipfs network By cid : %s", b.Cid())
 				// logger.Debugf("BlockService.BlockFetched %s", b.Cid())
 				batch = append(batch, b)
 			case <-ctx.Done():

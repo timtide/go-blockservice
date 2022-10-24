@@ -6,18 +6,16 @@ package blockservice
 import (
 	"context"
 	"fmt"
-	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/trace"
-	"io"
-	"sync"
-	"time"
-
 	blocks "github.com/ipfs/go-block-format"
 	cid "github.com/ipfs/go-cid"
 	blockstore "github.com/ipfs/go-ipfs-blockstore"
 	exchange "github.com/ipfs/go-ipfs-exchange-interface"
 	logging "github.com/ipfs/go-log/v2"
 	"github.com/ipfs/go-verifcid"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
+	"io"
+	"sync"
 
 	"github.com/ipfs/go-blockservice/internal"
 )
@@ -220,15 +218,8 @@ func (s *blockService) GetBlock(ctx context.Context, c cid.Cid) (blocks.Block, e
 	if s.exchange != nil {
 		f = s.getExchange
 	}
-	start := time.Now().UnixMilli()
-	logger.Debugf("start get %s block", c)
-	b, err := getBlock(ctx, c, s.blockstore, f) // hash security
-	if err != nil {
-		return nil, err
-	}
-	end := time.Now().UnixMilli()
-	logger.Debugf("end get block and total time is %d ms", end-start)
-	return b, nil
+
+	return getBlock(ctx, c, s.blockstore, f) // hash security
 }
 
 func (s *blockService) getExchange() notifiableFetcher {
@@ -407,16 +398,7 @@ func (s *Session) GetBlock(ctx context.Context, c cid.Cid) (blocks.Block, error)
 	ctx, span := internal.StartSpan(ctx, "Session.GetBlock", trace.WithAttributes(attribute.Stringer("CID", c)))
 	defer span.End()
 
-	start := time.Now().UnixMilli()
-	logger.Debugf("start get %s block", c)
-	b, err := getBlock(ctx, c, s.bs, s.getFetcherFactory()) // hash security
-	if err != nil {
-		return nil, err
-	}
-	end := time.Now().UnixMilli()
-	logger.Debugf("end get block and total time is %d ms", end-start)
-
-	return b, nil
+	return getBlock(ctx, c, s.bs, s.getFetcherFactory()) // hash security
 }
 
 // GetBlocks gets blocks in the context of a request session
