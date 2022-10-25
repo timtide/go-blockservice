@@ -5,10 +5,13 @@ import (
 	"errors"
 	"fmt"
 	"github.com/ipfs/go-cid"
+	logging "github.com/ipfs/go-log/v2"
 	"github.com/linguohua/titan/api"
 	"github.com/linguohua/titan/api/client"
 	"time"
 )
+
+var logger = logging.Logger("blockservice/titan")
 
 type ClientOfTitan struct {
 	ctx           context.Context
@@ -78,6 +81,6 @@ func (c *ClientOfTitan) GetDataFromEdgeNode(cid cid.Cid) ([]byte, error) {
 	if df.URL == "" || df.Token == "" {
 		return nil, errors.New("404 Not Found")
 	}
-
+	logger.Info("edge ip : ", df.URL)
 	return getBlockByHttp(df.URL, df.Token, cid)
 }
