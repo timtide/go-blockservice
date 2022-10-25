@@ -47,7 +47,7 @@ func (c *ClientOfTitan) getDownloadInfoFromScheduleService(cid cid.Cid) (*api.Do
 				return
 			}
 			defer closer()
-			downloadInfo, err := apiScheduler.GetDownloadInfoWithBlock(c.ctx, cid.String(), "")
+			downloadInfo, err := apiScheduler.GetDownloadInfoWithBlock(c.ctx, cid.String(), "120.24.37.24")
 			if err != nil {
 				return
 			}
