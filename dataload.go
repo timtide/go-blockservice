@@ -391,7 +391,6 @@ func loadBlockByTitan(ctx context.Context, c cid.Cid) (blocks.Block, error) {
 
 func loadBlocksByTitan(ctx context.Context, ks []cid.Cid, out chan blocks.Block) {
 	var wg sync.WaitGroup
-	var titanMisses []cid.Cid
 	if len(ks) != 0 {
 		wg.Add(len(ks))
 		for _, c := range ks {
@@ -401,7 +400,6 @@ func loadBlocksByTitan(ctx context.Context, ks []cid.Cid, out chan blocks.Block)
 				hit, err := titan.GetBlockFromTitan(ctx, cid)
 				if err != nil {
 					logger.Errorf("get block fail from titan By cid : %s, error : %s", cid, err.Error())
-					titanMisses = append(titanMisses, cid)
 					return
 				}
 				select {
