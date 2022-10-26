@@ -5,19 +5,17 @@ package blockservice
 
 import (
 	"context"
-	"io"
-	"sync"
-
-	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/trace"
-
+	"fmt"
 	blocks "github.com/ipfs/go-block-format"
 	cid "github.com/ipfs/go-cid"
 	blockstore "github.com/ipfs/go-ipfs-blockstore"
 	exchange "github.com/ipfs/go-ipfs-exchange-interface"
-	ipld "github.com/ipfs/go-ipld-format"
 	logging "github.com/ipfs/go-log/v2"
 	"github.com/ipfs/go-verifcid"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
+	"io"
+	"sync"
 
 	"github.com/ipfs/go-blockservice/internal"
 )
@@ -234,36 +232,31 @@ func getBlock(ctx context.Context, c cid.Cid, bs blockstore.Blockstore, fget fun
 		return nil, err
 	}
 
-	block, err := bs.Get(ctx, c)
-	if err == nil {
-		return block, nil
+	loadLevelInf := ctx.Value(LoadLevelOfSign)
+	// other default
+	if loadLevelInf == nil {
+		loadLevelInf = LoadOfLocalTitanIpfs.Uint8()
+	}
+	if loadLevel, ok := loadLevelInf.(uint8); ok {
+		switch loadLevel {
+		case LoadOfLocalTitanIpfs.Uint8():
+			return loadBlockByLocalTitanIpfs(ctx, c, bs, fget)
+		case LoadOfLocalTitan.Uint8():
+			return loadBlockByLocalTitan(ctx, c, bs)
+		case LoadOfLocalIpfs.Uint8():
+			return loadBlockByLocalIpfs(ctx, c, bs, fget)
+		case LoadOfOnlyLocal.Uint8():
+			return loadBlockByLocal(ctx, c, bs)
+		case LoadOfOnlyTitan.Uint8():
+			return loadBlockByTitan(ctx, c)
+		case LoadOfOnlyIpfs.Uint8():
+			return loadBlockByIpfs(ctx, c, bs, fget)
+		default:
+			return nil, fmt.Errorf("unknown load level")
+		}
 	}
 
-	if ipld.IsNotFound(err) && fget != nil {
-		f := fget() // Don't load the exchange until we have to
-
-		// TODO be careful checking ErrNotFound. If the underlying
-		// implementation changes, this will break.
-		logger.Debug("Blockservice: Searching bitswap")
-		blk, err := f.GetBlock(ctx, c)
-		if err != nil {
-			return nil, err
-		}
-		// also write in the blockstore for caching, inform the exchange that the block is available
-		err = bs.Put(ctx, blk)
-		if err != nil {
-			return nil, err
-		}
-		err = f.NotifyNewBlocks(ctx, blk)
-		if err != nil {
-			return nil, err
-		}
-		logger.Debugf("BlockService.BlockFetched %s", c)
-		return blk, nil
-	}
-
-	logger.Debug("Blockservice GetBlock: Not found")
-	return nil, err
+	return nil, fmt.Errorf("load level type fail")
 }
 
 // GetBlocks gets a list of blocks asynchronously and returns through
@@ -277,7 +270,6 @@ func (s *blockService) GetBlocks(ctx context.Context, ks []cid.Cid) <-chan block
 	if s.exchange != nil {
 		f = s.getExchange
 	}
-
 	return getBlocks(ctx, ks, s.blockstore, f) // hash security
 }
 
@@ -308,77 +300,27 @@ func getBlocks(ctx context.Context, ks []cid.Cid, bs blockstore.Blockstore, fget
 			ks = ks2
 		}
 
-		var misses []cid.Cid
-		for _, c := range ks {
-			hit, err := bs.Get(ctx, c)
-			if err != nil {
-				misses = append(misses, c)
-				continue
-			}
-			select {
-			case out <- hit:
-			case <-ctx.Done():
-				return
-			}
+		loadLevelInf := ctx.Value(LoadLevelOfSign)
+		// other default
+		if loadLevelInf == nil {
+			loadLevelInf = LoadOfLocalTitanIpfs.Uint8()
 		}
-
-		if len(misses) == 0 || fget == nil {
-			return
-		}
-
-		f := fget() // don't load exchange unless we have to
-		rblocks, err := f.GetBlocks(ctx, misses)
-		if err != nil {
-			logger.Debugf("Error with GetBlocks: %s", err)
-			return
-		}
-
-		// batch available blocks together
-		const batchSize = 32
-		batch := make([]blocks.Block, 0, batchSize)
-		for {
-			var noMoreBlocks bool
-		batchLoop:
-			for len(batch) < batchSize {
-				select {
-				case b, ok := <-rblocks:
-					if !ok {
-						noMoreBlocks = true
-						break batchLoop
-					}
-
-					logger.Debugf("BlockService.BlockFetched %s", b.Cid())
-					batch = append(batch, b)
-				case <-ctx.Done():
-					return
-				default:
-					break batchLoop
-				}
-			}
-
-			// also write in the blockstore for caching, inform the exchange that the blocks are available
-			err = bs.PutMany(ctx, batch)
-			if err != nil {
-				logger.Errorf("could not write blocks from the network to the blockstore: %s", err)
+		if loadLevel, ok := loadLevelInf.(uint8); ok {
+			switch loadLevel {
+			case LoadOfLocalTitanIpfs.Uint8():
+				loadBlocksByLocalTitanIpfs(ctx, ks, bs, fget, out)
+			case LoadOfLocalTitan.Uint8():
+				loadBlocksByLocalTitan(ctx, ks, bs, out)
+			case LoadOfLocalIpfs.Uint8():
+				loadBlocksByLocalIpfs(ctx, ks, bs, fget, out)
+			case LoadOfOnlyLocal.Uint8():
+				loadBlocksByLocal(ctx, ks, bs, out)
+			case LoadOfOnlyTitan.Uint8():
+				loadBlocksByTitan(ctx, ks, out)
+			case LoadOfOnlyIpfs.Uint8():
+				loadBlocksByIpfs(ctx, ks, bs, fget, out)
+			default:
 				return
-			}
-
-			err = f.NotifyNewBlocks(ctx, batch...)
-			if err != nil {
-				logger.Errorf("could not tell the exchange about new blocks: %s", err)
-				return
-			}
-
-			for _, b := range batch {
-				select {
-				case out <- b:
-				case <-ctx.Done():
-					return
-				}
-			}
-			batch = batch[:0]
-			if noMoreBlocks {
-				break
 			}
 		}
 	}()
