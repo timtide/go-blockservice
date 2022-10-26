@@ -400,12 +400,13 @@ func loadBlocksByTitan(ctx context.Context, ks []cid.Cid, out chan blocks.Block)
 				defer wg.Done()
 				hit, err := titan.GetBlockFromTitan(ctx, cid)
 				if err != nil {
+					logger.Errorf("get block fail from titan By cid : %s, error : %s", cid, err.Error())
 					titanMisses = append(titanMisses, cid)
 					return
 				}
 				select {
 				case out <- hit:
-					logger.Debugf("got block success from titan By cid : %s", hit.Cid())
+					logger.Debugf("got block success from titan By cid : %s", cid)
 				case <-ctx.Done():
 					return
 				}
