@@ -47,18 +47,19 @@ func (c *ClientOfTitan) getDownloadInfoFromScheduleService(cid cid.Cid) (*api.Do
 		go func(cx context.Context, url string) {
 			apiScheduler, closer, err := client.NewScheduler(c.ctx, url, nil)
 			if err != nil {
+				logger.Error(err.Error())
 				return
 			}
 			defer closer()
 			downloadInfo, err := apiScheduler.GetDownloadInfoWithBlock(c.ctx, cid.String(), "120.24.37.24")
 			if err != nil {
+				logger.Error(err.Error())
 				return
 			}
 			select {
 			case <-cx.Done():
 				return
-			default:
-				ch <- &downloadInfo
+			case ch <- &downloadInfo:
 				return
 			}
 		}(ctx, value)
