@@ -241,12 +241,6 @@ func getBlock(ctx context.Context, c cid.Cid, bs blockstore.Blockstore, fget fun
 		switch loadLevel {
 		case LoadOfLocalTitanIpfs.Uint8():
 			return loadBlockByLocalTitanIpfs(ctx, c, bs, fget)
-		case LoadOfLocalTitan.Uint8():
-			return loadBlockByLocalTitan(ctx, c, bs)
-		case LoadOfLocalIpfs.Uint8():
-			return loadBlockByLocalIpfs(ctx, c, bs, fget)
-		case LoadOfOnlyLocal.Uint8():
-			return loadBlockByLocal(ctx, c, bs)
 		case LoadOfOnlyTitan.Uint8():
 			return loadBlockByTitan(ctx, c)
 		case LoadOfOnlyIpfs.Uint8():
@@ -309,12 +303,6 @@ func getBlocks(ctx context.Context, ks []cid.Cid, bs blockstore.Blockstore, fget
 			switch loadLevel {
 			case LoadOfLocalTitanIpfs.Uint8():
 				loadBlocksByLocalTitanIpfs(ctx, ks, bs, fget, out)
-			case LoadOfLocalTitan.Uint8():
-				loadBlocksByLocalTitan(ctx, ks, bs, out)
-			case LoadOfLocalIpfs.Uint8():
-				loadBlocksByLocalIpfs(ctx, ks, bs, fget, out)
-			case LoadOfOnlyLocal.Uint8():
-				loadBlocksByLocal(ctx, ks, bs, out)
 			case LoadOfOnlyTitan.Uint8():
 				loadBlocksByTitan(ctx, ks, out)
 			case LoadOfOnlyIpfs.Uint8():
