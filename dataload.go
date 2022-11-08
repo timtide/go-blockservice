@@ -7,7 +7,7 @@ import (
 	"github.com/ipfs/go-cid"
 	blockstore "github.com/ipfs/go-ipfs-blockstore"
 	ipld "github.com/ipfs/go-ipld-format"
-	"github.com/timtide/titan-client"
+	"github.com/timtide/titan-client/blockdownload"
 )
 
 const LoadLevelOfSign = "loadLevelOfSign"
@@ -37,11 +37,13 @@ func loadBlockByLocalTitanIpfs(ctx context.Context, c cid.Cid, bs blockstore.Blo
 		logger.Debugf("got block success from local By cid : %s", c)
 		return block, nil
 	}
-
-	titanBlock, terr := titan_client.NewDownloader().GetBlock(ctx, c)
-	if terr == nil {
-		logger.Debugf("got block success from titan By cid : %s", c.String())
-		return titanBlock, nil
+	bg, bErr := blockdownload.NewBlockGetter()
+	if bErr == nil {
+		titanBlock, terr := bg.GetBlock(ctx, c)
+		if terr == nil {
+			logger.Debugf("got block success from titan By cid : %s", c.String())
+			return titanBlock, nil
+		}
 	}
 
 	if ipld.IsNotFound(err) && fget != nil {
@@ -92,26 +94,32 @@ func loadBlocksByLocalTitanIpfs(ctx context.Context, ks []cid.Cid, bs blockstore
 	if len(misses) != 0 {
 		// record hit cid
 		titanHit := make(map[cid.Cid]struct{}, len(misses))
-		readCh := titan_client.NewDownloader().GetBlocks(ctx, ks)
-		for {
-			select {
-			case b, ok := <-readCh:
-				if !ok {
-					goto titanEnd
+		bg, err := blockdownload.NewBlockGetter()
+		if err == nil {
+			readCh := bg.GetBlocks(ctx, ks)
+			for {
+				select {
+				case b, ok := <-readCh:
+					if !ok {
+						goto titanEnd
+					}
+					titanHit[b.Cid()] = struct{}{}
+					out <- b
+				case <-ctx.Done():
+					return
 				}
-				titanHit[b.Cid()] = struct{}{}
-				out <- b
-			case <-ctx.Done():
-				return
 			}
-		}
-	titanEnd:
-		for _, v := range misses {
-			if _, ok := titanHit[v]; !ok {
-				titanMisses = append(titanMisses, v)
+		titanEnd:
+			for _, v := range misses {
+				if _, ok := titanHit[v]; !ok {
+					titanMisses = append(titanMisses, v)
+				}
 			}
+			titanHit = nil
+		} else {
+			logger.Warn(err.Error())
+			titanMisses = misses
 		}
-		titanHit = nil
 	}
 
 	if len(titanMisses) == 0 || fget == nil {
@@ -177,7 +185,13 @@ func loadBlocksByLocalTitanIpfs(ctx context.Context, ks []cid.Cid, bs blockstore
 
 // titan to load block data
 func loadBlockByTitan(ctx context.Context, c cid.Cid) (blocks.Block, error) {
-	titanBlock, terr := titan_client.NewDownloader().GetBlock(ctx, c)
+	bg, err := blockdownload.NewBlockGetter()
+	if err != nil {
+		logger.Error(err.Error())
+		return nil, err
+	}
+
+	titanBlock, terr := bg.GetBlock(ctx, c)
 	if terr == nil {
 		logger.Debugf("got block success from titan By cid : %s", c.String())
 		return titanBlock, nil
@@ -188,7 +202,12 @@ func loadBlockByTitan(ctx context.Context, c cid.Cid) (blocks.Block, error) {
 }
 
 func loadBlocksByTitan(ctx context.Context, ks []cid.Cid, out chan blocks.Block) {
-	readCh := titan_client.NewDownloader().GetBlocks(ctx, ks)
+	bg, err := blockdownload.NewBlockGetter()
+	if err != nil {
+		logger.Error(err.Error())
+		return
+	}
+	readCh := bg.GetBlocks(ctx, ks)
 	for {
 		select {
 		case b, ok := <-readCh:
