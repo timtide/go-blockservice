@@ -378,8 +378,8 @@ github.com/stretchr/testify v1.5.1/go.mod h1:5W2xD1RspED5o8YsWQXVCued0rvSQ+mT+I5
 github.com/stretchr/testify v1.6.1/go.mod h1:6Fq8oRcR53rry900zMqJjRRixrwX3KX962/h/Wwjteg=
 github.com/stretchr/testify v1.7.0/go.mod h1:6Fq8oRcR53rry900zMqJjRRixrwX3KX962/h/Wwjteg=
 github.com/stretchr/testify v1.8.0 h1:pSgiaMZlXftHpm5L7V1+rVB+AZJydKsMxsQBIJw4PKk=
-github.com/timtide/titan-client v0.1.8 h1:jzUViTlf5cVw36te2UeyJU4Q2O9gBzfKm32df5CV/rs=
-github.com/timtide/titan-client v0.1.8/go.mod h1:HAkoiMJHzWhTLbEn8qtW70oSObN2cgdPLMbi9YyxddU=
+github.com/timtide/titan-client v0.1.9 h1:xiFQhN7wOjaFBvlfoZ78MdUNeNMvIeTdFfdZs0mE5ds=
+github.com/timtide/titan-client v0.1.9/go.mod h1:HAkoiMJHzWhTLbEn8qtW70oSObN2cgdPLMbi9YyxddU=
 github.com/whyrusleeping/go-logging v0.0.0-20170515211332-0457bb6b88fc/go.mod h1:bopw91TMyo8J3tvftk8xmU2kPmlrt4nScJQZU2hE5EM=
 github.com/whyrusleeping/multiaddr-filter v0.0.0-20160516205228-e903e4adabd7 h1:E9S12nwJwEOXe2d6gT6qxdvqMnNq+VnSsKPgm2ZZNds=
 github.com/x-cray/logrus-prefixed-formatter v0.5.2/go.mod h1:2duySbKsL6M18s5GU7VPsoEPHyzalCE06qoARUCeBBE=

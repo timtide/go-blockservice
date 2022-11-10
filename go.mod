@@ -17,7 +17,7 @@ require (
 	github.com/ipfs/go-ipld-format v0.4.0
 	github.com/ipfs/go-log/v2 v2.5.1
 	github.com/ipfs/go-verifcid v0.0.1
-	github.com/timtide/titan-client v0.1.8
+	github.com/timtide/titan-client v0.1.9
 	go.opentelemetry.io/otel v1.11.1
 	go.opentelemetry.io/otel/trace v1.11.1
 )
