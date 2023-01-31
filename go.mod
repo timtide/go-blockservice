@@ -49,7 +49,7 @@ require (
 	github.com/jbenet/goprocess v0.1.4 // indirect
 	github.com/klauspost/cpuid/v2 v2.0.14 // indirect
 	github.com/koron/go-ssdp v0.0.3 // indirect
-	github.com/kr/pretty v0.3.0 // indirect
+	github.com/kr/text v0.2.0 // indirect
 	github.com/libp2p/go-buffer-pool v0.1.0 // indirect
 	github.com/libp2p/go-cidranger v1.1.0 // indirect
 	github.com/libp2p/go-eventbus v0.2.1 // indirect
@@ -98,3 +98,5 @@ require (
 	google.golang.org/grpc v1.49.0 // indirect
 	lukechampine.com/blake3 v1.1.7 // indirect
 )
+
+replace github.com/ipfs/go-ipfs-blockstore v1.2.0 => github.com/timtide/go-ipfs-blockstore v0.0.1

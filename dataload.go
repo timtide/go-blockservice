@@ -37,11 +37,11 @@ func loadBlockByLocalTitanIpfs(ctx context.Context, c cid.Cid, bs blockstore.Blo
 		logger.Debugf("got block success from local By cid : %s", c)
 		return block, nil
 	}
-	titanBlock, terr := blockdownload.NewBlockGetter().GetBlock(ctx, c)
-	if terr == nil {
-		logger.Debugf("got block success from titan By cid : %s", c.String())
-		return titanBlock, nil
-	}
+	/*	titanBlock, terr := blockdownload.NewBlockGetter().GetBlock(ctx, c)
+		if terr == nil {
+			logger.Debugf("got block success from titan By cid : %s", c.String())
+			return titanBlock, nil
+		}*/
 
 	if ipld.IsNotFound(err) && fget != nil {
 		f := fget() // Don't load the exchange until we have to
@@ -87,7 +87,7 @@ func loadBlocksByLocalTitanIpfs(ctx context.Context, ks []cid.Cid, bs blockstore
 		}
 	}
 
-	var titanMisses []cid.Cid
+	/*var titanMisses []cid.Cid
 	if len(misses) != 0 {
 		// record hit cid
 		titanHit := make(map[cid.Cid]struct{}, len(misses))
@@ -111,14 +111,14 @@ func loadBlocksByLocalTitanIpfs(ctx context.Context, ks []cid.Cid, bs blockstore
 			}
 		}
 		titanHit = nil
-	}
+	}*/
 
-	if len(titanMisses) == 0 || fget == nil {
+	if len(misses) == 0 || fget == nil {
 		return
 	}
 
 	f := fget() // don't load exchange unless we have to
-	rblocks, err := f.GetBlocks(ctx, titanMisses)
+	rblocks, err := f.GetBlocks(ctx, misses)
 	if err != nil {
 		logger.Debugf("Error with GetBlocks: %s", err)
 		return
